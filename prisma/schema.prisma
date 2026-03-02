@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,58 +7,191 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum UserRole {
+  admin
+  editor
+  trainer
+  member
+}
+
+enum UserStatus {
+  pending
+  active
+  inactive
+  rejected
+}
+
+enum ArticleCategory {
+  club_news
+  events
+  regional_news
+  internal
+}
+
+enum ArticleStatus {
+  draft
+  pending
+  published
+  rejected
+  archived
+}
+
+enum ReviewAction {
+  submitted
+  approved
+  rejected
+  revised
+  archived
+}
+
+enum CommentStatus {
+  visible
+  hidden
+  deleted
+}
+
+// ─────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(AUTHOR)
-  posts     Post[]
-  comments  Comment[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String      @id @default(uuid())
+  fullName      String      @map("full_name") @db.VarChar(100)
+  email         String      @unique @db.VarChar(150)
+  passwordHash  String?     @map("password_hash") @db.VarChar(255)
+  avatarUrl     String?     @map("avatar_url") @db.VarChar(500)
+  role          UserRole    @default(member)
+  status        UserStatus  @default(pending)
+  googleId      String?     @unique @map("google_id") @db.VarChar(150)
+
+  // Relations
+  approvedById  String?     @map("approved_by")
+  approvedBy    User?       @relation("ApprovedBy", fields: [approvedById], references: [id])
+  approvedUsers User[]      @relation("ApprovedBy")
+  approvedAt    DateTime?   @map("approved_at")
+
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  // Back-relations
+  articles        Article[]
+  comments        Comment[]       @relation("CommentAuthor")
+  hiddenComments  Comment[]       @relation("CommentHiddenBy")
+  articleReviews  ArticleReview[]
+  resetTokens     PasswordResetToken[]
+
+  @@map("users")
 }
 
-model Post {
-  id          Int       @id @default(autoincrement())
-  title       String
-  slug        String    @unique
-  excerpt     String?
-  content     String    // có thể lưu markdown
-  published   Boolean   @default(false)
-  authorId    Int
-  author      User      @relation(fields: [authorId], references: [id])
-  comments    Comment[]
-  categories  Category[]
-  tags        Tag[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique @db.VarChar(255)
+  expiresAt DateTime  @map("expires_at")
+  used      Boolean   @default(false)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("password_reset_tokens")
 }
 
-model Category {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
-  posts Post[]
+model Article {
+  id           String          @id @default(uuid())
+  title        String          @db.VarChar(300)
+  slug         String          @unique @db.VarChar(350)
+  excerpt      String?         @db.Text
+  content      String          @db.Text
+  thumbnailUrl String?         @map("thumbnail_url") @db.VarChar(500)
+  category     ArticleCategory
+  status       ArticleStatus   @default(draft)
+  isFeatured   Boolean         @default(false) @map("is_featured")
+  viewCount    Int             @default(0) @map("view_count")
+  publishedAt  DateTime?       @map("published_at")
+
+  authorId     String          @map("author_id")
+  author       User            @relation(fields: [authorId], references: [id])
+
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  // Back-relations
+  images       ArticleImage[]
+  tags         ArticleTag[]
+  comments     Comment[]
+  reviews      ArticleReview[]
+
+  @@map("articles")
+}
+
+model ArticleImage {
+  id         String   @id @default(uuid())
+  articleId  String   @map("article_id")
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  imageUrl   String   @map("image_url") @db.VarChar(500)
+  caption    String?  @db.VarChar(300)
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("article_images")
 }
 
 model Tag {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
-  posts Post[]
+  id        String       @id @default(uuid())
+  name      String       @unique @db.VarChar(100)
+  slug      String       @unique @db.VarChar(120)
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  articles  ArticleTag[]
+
+  @@map("tags")
+}
+
+model ArticleTag {
+  articleId String  @map("article_id")
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tagId     String  @map("tag_id")
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@map("article_tags")
+}
+
+model ArticleReview {
+  id          String       @id @default(uuid())
+  articleId   String       @map("article_id")
+  article     Article      @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  reviewerId  String?      @map("reviewer_id")
+  reviewer    User?        @relation(fields: [reviewerId], references: [id])
+  action      ReviewAction
+  note        String?      @db.Text
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@map("article_reviews")
 }
 
 model Comment {
-  id        Int      @id @default(autoincrement())
-  content   String
-  postId    Int
-  authorId  Int
-  post      Post     @relation(fields: [postId], references: [id])
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
-}
+  id        String        @id @default(uuid())
+  articleId String        @map("article_id")
+  article   Article       @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId    String        @map("user_id")
+  user      User          @relation("CommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  parentId  String?       @map("parent_id")
+  parent    Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[]     @relation("CommentReplies")
+  content   String        @db.Text
+  status    CommentStatus @default(visible)
 
-enum Role {
-  ADMIN
-  AUTHOR
-  READER
+  hiddenById  String?   @map("hidden_by")
+  hiddenBy    User?     @relation("CommentHiddenBy", fields: [hiddenById], references: [id])
+  hiddenAt    DateTime? @map("hidden_at")
+  hiddenReason String?  @map("hidden_reason") @db.VarChar(300)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("comments")
 }
