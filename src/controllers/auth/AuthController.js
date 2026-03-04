@@ -1,8 +1,9 @@
 const response = require('../../utils/response');
 
 class AuthController {
-    constructor(authService) {
+    constructor(authService, passwordService) {
         this.authService = authService;
+        this.passwordService = passwordService;
     }
 
     register = async (req, res, next) => {
@@ -45,6 +46,36 @@ class AuthController {
         } catch (err) {
             next(err);
         }
+    }
+
+    forgotPassword = async (req, res, next) => {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                return response.error(res, 'Vui lòng nhập email', 400);
+            }
+
+            await this.passwordService.forgotPassword(email);
+            return response.success(
+                res, null,
+                'Nếu email tồn tại, hướng dẫn đặt lại mật khẩu đã được gửi.'
+            );
+        } catch (err) { next(err); }
+    }
+
+    resetPassword = async (req, res, next) => {
+        try {
+            const { token, password } = req.body;
+            if (!token || !password) {
+                return response.error(res, 'Thiếu token hoặc mật khẩu mới', 400);
+            }
+            if (password.length < 8) {
+                return response.error(res, 'Mật khẩu phải có ít nhất 8 ký tự', 400);
+            }
+
+            await this.passwordService.resetPassword(token, password);
+            return response.success(res, null, 'Đặt lại mật khẩu thành công!');
+        } catch (err) { next(err); }
     }
 }
 
