@@ -1,6 +1,5 @@
 const AppError = require('../domain/errors/AppError');
 
-// Dùng sau authenticate middleware
 const authorize = (...roles) => {
     return (req, res, next) => {
         if (!req.user) {
@@ -13,7 +12,6 @@ const authorize = (...roles) => {
     };
 };
 
-// Kiểm tra chính chủ hoặc admin
 const authorizeOwnerOrAdmin = (getResourceUserId) => {
     return async (req, res, next) => {
         try {

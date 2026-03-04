@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng ký — CMS Karatedo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="/css/auth.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=Bebas+Neue&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --navy: #0D1B2A;
+            --navy-mid: #1B3A5C;
+            --red: #C0392B;
+            --red-light: #E74C3C;
+            --white: #F8F6F1;
+            --cream: #EDE8E0;
+            --gray: #9A9590;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--navy);
+            color: var(--white);
+            min-height: 100vh;
+            overflow-x: hidden
+        }
+
+        .auth-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0
+        }
+
+        .auth-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 80% 50%, rgba(192, 57, 43, 0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 20% 30%, rgba(27, 58, 92, 0.3) 0%, transparent 60%)
+        }
+
+        .auth-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: repeating-linear-gradient(90deg, transparent, transparent 80px, rgba(255, 255, 255, 0.015) 80px, rgba(255, 255, 255, 0.015) 81px)
+        }
+
+        .bg-text {
+            position: fixed;
+            bottom: -20px;
+            left: -20px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(180px, 25vw, 360px);
+            color: rgba(255, 255, 255, 0.025);
+            line-height: 1;
+            user-select: none;
+            pointer-events: none;
+            z-index: 0;
+            letter-spacing: -0.02em
+        }
+
+        .auth-wrapper {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr
+        }
+
+        @media(max-width:900px) {
+            .auth-wrapper {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .auth-panel-left {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 48px;
+            border-right: 1px solid var(--border)
+        }
+
+        @media(max-width:900px) {
+            .auth-panel-left {
+                display: none
+            }
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)
+        }
+
+        .brand-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px;
+            letter-spacing: 0.1em;
+            color: var(--white)
+        }
+
+        .panel-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px 0
+        }
+
+        .panel-tag {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--red);
+            margin-bottom: 24px
+        }
+
+        .panel-tag::before {
+            content: '—— '
+        }
+
+        .panel-title {
+            font-family: 'Noto Serif', serif;
+            font-size: clamp(36px, 4vw, 52px);
+            line-height: 1.15;
+            color: var(--white);
+            margin-bottom: 24px
+        }
+
+        .panel-title em {
+            font-style: italic;
+            color: var(--cream)
+        }
+
+        .panel-desc {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--gray);
+            max-width: 380px;
+            margin-bottom: 48px
+        }
+
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px
+        }
+
+        .step {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start
+        }
+
+        .step-num {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            background: rgba(192, 57, 43, 0.15);
+            border: 1px solid rgba(192, 57, 43, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 16px;
+            color: var(--red)
+        }
+
+        .step-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 2px
+        }
+
+        .step-info p {
+            font-size: 13px;
+            color: var(--gray);
+            line-height: 1.5
+        }
+
+        .panel-footer {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 0.05em
+        }
+
+        .auth-panel-right {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 32px
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 420px;
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .mobile-brand {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 32px;
+            text-decoration: none
+        }
+
+        @media(max-width:900px) {
+            .mobile-brand {
+                display: flex
+            }
+        }
+
+        .form-header {
+            margin-bottom: 32px
+        }
+
+        .form-eyebrow {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--red);
+            margin-bottom: 12px
+        }
+
+        .form-title {
+            font-family: 'Noto Serif', serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 8px
+        }
+
+        .form-subtitle {
+            font-size: 14px;
+            color: var(--gray);
+            line-height: 1.6
+        }
+
+        .form-group {
+            margin-bottom: 18px
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 8px
+        }
+
+        .input-wrap {
+            position: relative
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            opacity: 0.4;
+            pointer-events: none
+        }
+
+        .input-wrap input {
+            width: 100%;
+            padding: 14px 16px 14px 44px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--white);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            outline: none
+        }
+
+        .input-wrap input::placeholder {
+            color: rgba(255, 255, 255, 0.2)
+        }
+
+        .input-wrap input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.15)
+        }
+
+        .input-wrap input.error {
+            border-color: #E74C3C;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15)
+        }
+
+        .field-error {
+            font-size: 12px;
+            color: #E74C3C;
+            margin-top: 6px;
+            display: none
+        }
+
+        .field-error.show {
+            display: block
+        }
+
+        .password-strength {
+            margin-top: 8px;
+            display: flex;
+            gap: 4px
+        }
+
+        .bar {
+            flex: 1;
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.3s ease
+        }
+
+        .bar.weak {
+            background: #E74C3C
+        }
+
+        .bar.medium {
+            background: #F39C12
+        }
+
+        .bar.strong {
+            background: #2ECC71
+        }
+
+        .strength-text {
+            font-size: 11px;
+            color: var(--gray);
+            margin-top: 4px
+        }
+
+        .checkbox-wrap {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 20px
+        }
+
+        .checkbox-wrap input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            min-width: 16px;
+            accent-color: var(--red);
+            margin-top: 2px;
+            cursor: pointer
+        }
+
+        .checkbox-wrap label {
+            font-size: 13px;
+            color: var(--gray);
+            line-height: 1.5;
+            cursor: pointer
+        }
+
+        .checkbox-wrap label a {
+            color: var(--white);
+            text-decoration: underline;
+            text-underline-offset: 2px
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.08)
+        }
+
+        .divider span {
+            font-size: 12px;
+            color: var(--gray);
+            letter-spacing: 0.05em
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px 24px;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: 0.02em
+        }
+
+        .btn-primary {
+            background: var(--red);
+            color: var(--white)
+        }
+
+        .btn-primary:hover {
+            background: var(--red-light);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(192, 57, 43, 0.4)
+        }
+
+        .btn-primary.loading {
+            pointer-events: none;
+            opacity: 0.8
+        }
+
+        .btn-primary.loading::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .btn-google {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.1)
+        }
+
+        .btn-google:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2)
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px
+        }
+
+        .alert.show {
+            display: flex
+        }
+
+        .alert-success {
+            background: rgba(39, 174, 96, 0.1);
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            color: #2ECC71
+        }
+
+        .alert-error {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            color: #E74C3C
+        }
+
+        .form-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--gray)
+        }
+
+        .form-footer a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            transition: border-color 0.2s
+        }
+
+        .form-footer a:hover {
+            border-color: var(--red);
+            color: var(--red)
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-bg"></div>
+    <div class="bg-text">道</div>
+
+    <div class="auth-wrapper">
+        <!-- Left Panel -->
+        <div class="auth-panel-left">
+            <a href="/" class="brand">
+                <div class="brand-icon">🥋</div>
+                <span class="brand-name">Karatedo CMS</span>
+            </a>
+            <div class="panel-content">
+                <span class="panel-tag">Gia nhập cộng đồng</span>
+                <h1 class="panel-title">Bắt đầu<br /><em>hành trình</em><br />của bạn</h1>
+                <p class="panel-desc">Đăng ký tài khoản để tham gia cộng đồng Karatedo, tiếp cận kho kỹ thuật và theo
+                    dõi các sự kiện mới nhất.</p>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-num">1</div>
+                        <div class="step-info">
+                            <h4>Tạo tài khoản</h4>
+                            <p>Điền thông tin cơ bản để đăng ký</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">2</div>
+                        <div class="step-info">
+                            <h4>Chờ phê duyệt</h4>
+                            <p>Admin sẽ xem xét và kích hoạt tài khoản</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">3</div>
+                        <div class="step-info">
+                            <h4>Khám phá</h4>
+                            <p>Truy cập toàn bộ nội dung và cộng đồng</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-footer">© 2026 Karatedo CMS — All rights reserved</div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="auth-panel-right">
+            <div class="form-container">
+                <a href="/" class="mobile-brand">
+                    <div class="brand-icon">🥋</div>
+                    <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.1em;">Karatedo
+                        CMS</span>
+                </a>
+
+                <div class="form-header">
+                    <div class="form-eyebrow">Tạo tài khoản</div>
+                    <h2 class="form-title">Đăng ký</h2>
+                    <p class="form-subtitle">Tham gia cộng đồng Karatedo ngay hôm nay</p>
+                </div>
+
+                <div class="alert alert-error" id="alertError"><span>⚠️</span><span id="alertMsg"></span></div>
+                <div class="alert alert-success" id="alertSuccess"><span>✅</span><span id="alertSuccessMsg"></span>
+                </div>
+
+                <form id="registerForm" novalidate>
+                    <div class="form-group">
+                        <label for="fullName">Họ và tên</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">👤</span>
+                            <input type="text" id="fullName" placeholder="Nguyễn Văn A" autocomplete="name" />
+                        </div>
+                        <div class="field-error" id="nameError">Vui lòng nhập họ và tên (ít nhất 2 ký tự)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">✉️</span>
+                            <input type="email" id="email" placeholder="your@email.com" autocomplete="email" />
+                        </div>
+                        <div class="field-error" id="emailError">Vui lòng nhập email hợp lệ</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Mật khẩu</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="password" placeholder="Ít nhất 8 ký tự"
+                                autocomplete="new-password" />
+                        </div>
+                        <div class="password-strength">
+                            <div class="bar" id="bar1"></div>
+                            <div class="bar" id="bar2"></div>
+                            <div class="bar" id="bar3"></div>
+                        </div>
+                        <div class="strength-text" id="strengthText"></div>
+                        <div class="field-error" id="passwordError">Mật khẩu phải có ít nhất 8 ký tự</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Xác nhận mật khẩu</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu"
+                                autocomplete="new-password" />
+                        </div>
+                        <div class="field-error" id="confirmError">Mật khẩu xác nhận không khớp</div>
+                    </div>
+
+                    <div class="checkbox-wrap">
+                        <input type="checkbox" id="terms" />
+                        <label for="terms">Tôi đồng ý với <a href="/terms">Điều khoản sử dụng</a> và <a
+                                href="/privacy">Chính sách bảo mật</a></label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Tạo tài khoản</button>
+                </form>
+
+                <div class="divider"><span>hoặc</span></div>
+
+                <a href="/api/auth/google" class="btn btn-google">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            fill="#4285F4" />
+                        <path
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            fill="#34A853" />
+                        <path
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+                            fill="#FBBC05" />
+                        <path
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                            fill="#EA4335" />
+                    </svg>
+                    Đăng ký với Google
+                </a>
+
+                <div class="form-footer">Đã có tài khoản? <a href="/auth/login">Đăng nhập</a></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const alertError = document.getElementById('alertError');
+        const alertSuccess = document.getElementById('alertSuccess');
+        const API_URL = window.location.port === '5500'
+            ? 'http://localhost:3000' : '';
+
+        function showError(msg) { document.getElementById('alertMsg').textContent = msg; alertError.classList.add('show'); alertSuccess.classList.remove('show'); }
+        function showSuccess(msg) { document.getElementById('alertSuccessMsg').textContent = msg; alertSuccess.classList.add('show'); alertError.classList.remove('show'); }
+        function clearAlerts() { alertError.classList.remove('show'); alertSuccess.classList.remove('show'); }
+
+        // Password strength
+        document.getElementById('password').addEventListener('input', function () {
+            const val = this.value;
+            const bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3')];
+            const txt = document.getElementById('strengthText');
+            bars.forEach(b => b.className = 'bar');
+
+            if (val.length === 0) { txt.textContent = ''; return; }
+
+            let score = 0;
+            if (val.length >= 8) score++;
+            if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+
+            const levels = [
+                { cls: 'weak', label: 'Yếu', count: 1 },
+                { cls: 'medium', label: 'Trung bình', count: 2 },
+                { cls: 'strong', label: 'Mạnh', count: 3 },
+            ];
+            const level = levels[Math.max(0, score - 1)] || levels[0];
+            for (let i = 0; i < level.count; i++) bars[i].classList.add(level.cls);
+            txt.textContent = `Độ mạnh: ${level.label}`;
+        });
+
+        function validateField(id, errorId, condition, msg) {
+            const input = document.getElementById(id);
+            const err = document.getElementById(errorId);
+            if (!condition(input.value)) {
+                input.classList.add('error'); err.textContent = msg; err.classList.add('show'); return false;
+            }
+            input.classList.remove('error'); err.classList.remove('show'); return true;
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearAlerts();
+
+            const nameOk = validateField('fullName', 'nameError', v => v.trim().length >= 2, 'Vui lòng nhập họ và tên (ít nhất 2 ký tự)');
+            const emailOk = validateField('email', 'emailError', v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), 'Vui lòng nhập email hợp lệ');
+            const passOk = validateField('password', 'passwordError', v => v.length >= 8, 'Mật khẩu phải có ít nhất 8 ký tự');
+            const confirmOk = validateField('confirmPassword', 'confirmError', v => v === document.getElementById('password').value, 'Mật khẩu xác nhận không khớp');
+
+            if (!document.getElementById('terms').checked) { showError('Vui lòng đồng ý với điều khoản sử dụng'); return; }
+            if (!nameOk || !emailOk || !passOk || !confirmOk) return;
+
+            const btn = document.getElementById('submitBtn');
+            btn.classList.add('loading'); btn.textContent = '';
+
+            try {
+                const res = await fetch(`${API_URL}/api/auth/register`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName: document.getElementById('fullName').value.trim(), email: document.getElementById('email').value, password: document.getElementById('password').value })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showSuccess('Đăng ký thành công! Vui lòng chờ Admin phê duyệt tài khoản.');
+                    document.getElementById('registerForm').reset();
+                    document.querySelectorAll('.bar').forEach(b => b.className = 'bar');
+                    document.getElementById('strengthText').textContent = '';
+                } else { showError(data.message || 'Đăng ký thất bại'); }
+            } catch { showError('Lỗi kết nối, vui lòng thử lại'); }
+            finally { btn.classList.remove('loading'); btn.textContent = 'Tạo tài khoản'; }
+        });
+    </script>
+</body>
+
+</html>
