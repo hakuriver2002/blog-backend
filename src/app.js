@@ -11,7 +11,7 @@ const { authenticate } = require('./middlewares/auth.middleware');
 const { authorize } = require('./middlewares/role.middleware');
 
 const authRoutes = require('./routes/auth.routes');
-const postRoutes = require('./routes/post.routes');
+const articleRoutes = require('./routes/article.routes');
 
 const app = express();
 
@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 
 app.use('/api/auth', authRoutes);
-app.use('/api/posts', postRoutes);
+app.use('/api/articles', articleRoutes);
 
 app.get('/test/admin',
     authenticate,
