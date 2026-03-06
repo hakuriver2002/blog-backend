@@ -8,6 +8,7 @@ const ReviewController = require('../controllers/article/ReviewController');
 const { authenticate, optionalAuth } = require('../middlewares/auth.middleware');
 const { authorize } = require('../middlewares/role.middleware');
 const { uploadThumbnail } = require('../middlewares/upload.middleware');
+const { canViewArticle, canEditArticle, canDeleteArticle } = require('../middlewares/permission.middleware');
 
 const router = express.Router();
 const articleRepo = new ArticleRepository();
@@ -32,7 +33,11 @@ router.get('/:id/reviews',
     reviewCtrl.getHistory
 );
 
-router.get('/:id', optionalAuth, articleCtrl.getById);
+router.get('/:id',
+    optionalAuth,
+    canViewArticle,
+    articleCtrl.getById
+);
 
 // CRUD Article
 router.post('/',
@@ -45,6 +50,7 @@ router.post('/',
 router.put('/:id',
     authenticate,
     authorize('admin', 'editor', 'trainer'),
+    canEditArticle,
     uploadThumbnail,
     articleCtrl.update
 );
@@ -52,6 +58,7 @@ router.put('/:id',
 router.delete('/:id',
     authenticate,
     authorize('admin', 'editor', 'trainer'),
+    canDeleteArticle,
     articleCtrl.remove
 );
 

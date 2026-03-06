@@ -28,7 +28,10 @@ class ArticleService {
             throw new AppError('Vui lòng đăng nhập để xem nội dung này', 401);
         }
 
-        await this.articleRepo.incrementViewCount(id);
+        if (article.status === 'published') {
+            await this.articleRepo.incrementViewCount(id);
+        }
+
         return article;
     }
     async createArticle({ title, content, excerpt, category, thumbnailUrl, imageUrls, isFeatured }, authorId) {

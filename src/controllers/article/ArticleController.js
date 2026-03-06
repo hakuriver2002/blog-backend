@@ -30,7 +30,8 @@ class ArticleController {
         try {
             const article = await this.articleService.getArticleById(
                 req.params.id,
-                !!req.user
+                !!req.user,
+                req.article
             );
             return response.success(res, article);
         } catch (err) { next(err); }

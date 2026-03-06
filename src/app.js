@@ -13,6 +13,7 @@ const { authorize } = require('./middlewares/role.middleware');
 const authRoutes = require('./routes/auth.routes');
 const articleRoutes = require('./routes/article.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const commentRoutes = require('./routes/comment.routes');
 
 const app = express();
 
@@ -34,6 +35,8 @@ app.use(passport.initialize());
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/articles/:id/comments', commentRoutes);
+app.use('/api/comments', commentRoutes);
 
 app.get('/test/admin',
     authenticate,
