@@ -124,6 +124,11 @@ model Article {
   comments     Comment[]
   reviews      ArticleReview[]
 
+  @@index([status])
+  @@index([category])
+  @@index([authorId])
+  @@index([publishedAt])
+  @@index([title])
   @@map("articles")
 }
 

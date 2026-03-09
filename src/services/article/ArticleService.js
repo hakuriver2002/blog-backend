@@ -99,8 +99,17 @@ class ArticleService {
 
         await this.articleRepo.delete(id);
     }
-    async getMyArticles(authorId) {
-        return await this.articleRepo.findByAuthor(authorId);
+    async getMyArticles(authorId, { status, page = 1, limit = 10 } = {}) {
+        const where = {
+            authorId,
+            ...(status && { status }),
+        };
+
+        const [articles, total] = await Promise.all([
+            this.articleRepo.findByAuthorWithFilter(authorId, { status, page: +page, limit: +limit }),
+        ]);
+
+        return articles;
     }
 }
 

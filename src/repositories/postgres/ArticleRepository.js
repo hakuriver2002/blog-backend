@@ -112,6 +112,37 @@ class ArticleRepository extends IArticleRepository {
             data: { viewCount: { increment: 1 } },
         });
     }
+
+    async findByAuthorWithFilter(authorId, { status, page = 1, limit = 10 }) {
+        const skip = (page - 1) * limit;
+        const where = {
+            authorId,
+            ...(status && { status }),
+        };
+
+        const [articles, total] = await Promise.all([
+            prisma.article.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    title: true,
+                    slug: true,
+                    category: true,
+                    status: true,
+                    thumbnailUrl: true,
+                    viewCount: true,
+                    createdAt: true,
+                    publishedAt: true,
+                }
+            }),
+            prisma.article.count({ where }),
+        ]);
+
+        return { articles, total };
+    }
 }
 
 module.exports = ArticleRepository;
