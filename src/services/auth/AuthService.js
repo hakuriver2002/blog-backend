@@ -56,14 +56,14 @@ class AuthService {
         return { token, user: userInfo };
     }
 
-    async logout({ userId, refreshToken, logoutAll = false }) {
-        if (logoutAll) {
-            await this.userRepo.deleteAllRefreshTokens(userId);
-        } else if (refreshToken) {
-            await this.userRepo.deleteRefreshToken(refreshToken);
-        }
-        return { message: 'Đăng xuất thành công' };
-    }
+    // async logout({ userId, refreshToken, logoutAll = false }) {
+    //     if (logoutAll) {
+    //         await this.userRepo.deleteAllRefreshTokens(userId);
+    //     } else if (refreshToken) {
+    //         await this.userRepo.deleteRefreshToken(refreshToken);
+    //     }
+    //     return { message: 'Đăng xuất thành công' };
+    // }
 }
 
 module.exports = AuthService;

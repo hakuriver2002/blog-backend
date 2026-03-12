@@ -51,7 +51,7 @@ app.use(sanitizeBody);
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(passport.initialize());
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/articles/:id/comments', commentRoutes);
