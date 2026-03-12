@@ -128,6 +128,7 @@ router.post('/login', authLimiter, validateLogin, controller.login);
  *         $ref: '#/components/responses/Unauthorized'
  */
 router.get('/me', authenticate, controller.getMe);
+router.post('/logout', authenticate, controller.logout);
 
 /**
  * @swagger

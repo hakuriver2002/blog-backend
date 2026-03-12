@@ -47,6 +47,18 @@ class AuthController {
             next(err);
         }
     }
+    logout = async (req, res, next) => {
+        try {
+            const userId = req.user.id;
+            const refreshToken = req.body.refreshToken || null;
+            const logoutAll = req.body.logoutAll || false;
+
+            const result = await this.authService.logout({ userId, refreshToken, logoutAll });
+            return response.success(res, null, result.message);
+        } catch (err) {
+            next(err);
+        }
+    }
 
     forgotPassword = async (req, res, next) => {
         try {
