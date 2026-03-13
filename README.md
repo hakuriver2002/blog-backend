@@ -9,7 +9,7 @@ features with API documentation via Swagger.
 
 ## Features
 
--   Authentication (Login / Register / Password Reset)
+-   Authentication (Login / Register / Password Reset / Google Auth)
 -   Role-Based Access Control (Admin, Editor, User)
 -   Article Management (CRUD)
 -   Comment System
