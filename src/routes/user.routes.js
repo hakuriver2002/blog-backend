@@ -54,6 +54,12 @@ const controller = new UserController(new UserService(new UserRepository()));
  *       403:
  *         $ref: '#/components/responses/Forbidden'
  */
+router.post('/bulk',
+    authenticate,
+    authorize('admin'),
+    controller.bulk
+);
+
 router.get('/',
     authenticate,
     authorize('admin'),

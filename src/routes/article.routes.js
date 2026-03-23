@@ -317,4 +317,28 @@ router.patch('/:id/reject',
     reviewCtrl.reject
 );
 
+router.patch('/:id/autosave',
+    authenticate,
+    authorize('admin', 'editor', 'trainer'),
+    articleCtrl.autosave
+);
+
+router.patch('/:id/submit',
+    authenticate,
+    authorize('admin', 'editor', 'trainer'),
+    reviewCtrl.submit
+);
+
+router.patch('/:id/approve',
+    authenticate,
+    authorize('admin', 'editor'),
+    reviewCtrl.approve
+);
+
+router.patch('/:id/reject',
+    authenticate,
+    authorize('admin', 'editor'),
+    reviewCtrl.reject
+);
+
 module.exports = router;

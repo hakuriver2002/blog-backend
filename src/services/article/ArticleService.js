@@ -111,6 +111,63 @@ class ArticleService {
 
         return articles;
     }
+
+    async getRelated(articleId, { limit = 5 } = {}) {
+        const article = await this.articleRepo.findById(articleId);
+        if (!article) throw new AppError('Bài viết không tồn tại', 404);
+
+        const tagIds = article.tags?.map(t => t.id) ?? [];
+
+        return this.articleRepo.findRelated(articleId, {
+            category: article.category,
+            tagIds,
+            limit: Math.min(+limit || 5, 10),
+        });
+    }
+
+    async autosave(articleId, userId, { title, content, excerpt }) {
+        const article = await this.articleRepo.findById(articleId);
+        if (!article) throw new AppError('Bài viết không tồn tại', 404);
+        if (article.authorId !== userId) throw new AppError('Không có quyền', 403);
+        if (!['draft', 'rejected'].includes(article.status)) {
+            throw new AppError('Chỉ auto-save được bài ở trạng thái nháp hoặc bị từ chối', 400);
+        }
+
+        return this.articleRepo.autosave(articleId, { title, content, excerpt });
+    }
+
+    async bulkAction(ids, action, userRole) {
+        if (!Array.isArray(ids) || ids.length === 0) {
+            throw new AppError('Vui lòng chọn ít nhất 1 bài viết', 400);
+        }
+        if (ids.length > 100) {
+            throw new AppError('Tối đa 100 bài mỗi lần', 400);
+        }
+
+        const isAdmin = userRole === 'admin';
+        const isEditor = ['admin', 'editor'].includes(userRole);
+
+        switch (action) {
+            case 'delete':
+                if (!isAdmin) throw new AppError('Chỉ Admin mới được xóa hàng loạt', 403);
+                return { affected: await this.articleRepo.bulkDelete(ids), action };
+
+            case 'publish':
+                if (!isEditor) throw new AppError('Chỉ Admin/Editor mới được duyệt hàng loạt', 403);
+                return { affected: await this.articleRepo.bulkUpdateStatus(ids, 'published'), action };
+
+            case 'archive':
+                if (!isEditor) throw new AppError('Chỉ Admin/Editor mới được archive hàng loạt', 403);
+                return { affected: await this.articleRepo.bulkUpdateStatus(ids, 'archived'), action };
+
+            case 'reject':
+                if (!isEditor) throw new AppError('Chỉ Admin/Editor mới được từ chối hàng loạt', 403);
+                return { affected: await this.articleRepo.bulkUpdateStatus(ids, 'rejected'), action };
+
+            default:
+                throw new AppError(`Action không hợp lệ. Chọn: delete, publish, archive, reject`, 400);
+        }
+    }
 }
 
 module.exports = ArticleService;

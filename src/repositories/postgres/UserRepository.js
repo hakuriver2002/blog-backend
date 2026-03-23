@@ -84,6 +84,43 @@ class UserRepository extends IUserRepository {
             select: SELECT_PUBLIC,
         });
     }
+
+    async bulkDelete(ids) {
+        const result = await prisma.user.deleteMany({
+            where: { id: { in: ids }, role: { not: 'admin' } },
+        });
+        return result.count;
+    }
+
+    async bulkUpdateStatus(ids, status, approvedById = null) {
+        const data = { status };
+        if (status === 'active' && approvedById) {
+            data.approvedById = approvedById;
+            data.approvedAt = new Date();
+        }
+
+        const result = await prisma.user.updateMany({
+            where: { id: { in: ids }, role: { not: 'admin' } },
+            data,
+        });
+        return result.count;
+    }
+
+    async saveResetToken(userId, token, expiresAt) {
+        await prisma.passwordResetToken.deleteMany({ where: { userId } });
+        return prisma.passwordResetToken.create({ data: { userId, token, expiresAt } });
+    }
+
+    async findResetToken(token) {
+        return prisma.passwordResetToken.findUnique({
+            where: { token },
+            include: { user: true },
+        });
+    }
+
+    async markResetTokenUsed(token) {
+        return prisma.passwordResetToken.update({ where: { token }, data: { used: true } });
+    }
 }
 
 module.exports = UserRepository;

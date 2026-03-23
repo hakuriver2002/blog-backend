@@ -143,6 +143,150 @@ class ArticleRepository extends IArticleRepository {
 
         return { articles, total };
     }
+
+    async syncTags(articleId, tagNames) {
+        await prisma.articleTag.deleteMany({ where: { articleId } });
+        if (!tagNames?.length) return;
+
+        const tags = await Promise.all(
+            tagNames.map(name => {
+                const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                return prisma.tag.upsert({
+                    where: { slug },
+                    update: {},
+                    create: { name, slug },
+                });
+            })
+        );
+
+        await prisma.articleTag.createMany({
+            data: tags.map(tag => ({ articleId, tagId: tag.id })),
+            skipDuplicates: true,
+        });
+    }
+
+    async addReview({ articleId, reviewerId, action, note }) {
+        return prisma.articleReview.create({
+            data: { articleId, reviewerId, action, note },
+        });
+    }
+
+    async getReviews(articleId) {
+        return prisma.articleReview.findMany({
+            where: { articleId },
+            include: { reviewer: { select: { id: true, fullName: true } } },
+            orderBy: { createdAt: 'asc' },
+        });
+    }
+
+    async findRelated(articleId, { category, tagIds = [], limit = 5 }) {
+        // Bước 1: tìm bài cùng tag (ưu tiên cao nhất)
+        let related = [];
+
+        if (tagIds.length > 0) {
+            related = await prisma.article.findMany({
+                where: {
+                    id: { not: articleId },
+                    status: 'published',
+                    tags: {
+                        some: { tagId: { in: tagIds } },
+                    },
+                },
+                select: articleListSelect,
+                orderBy: { publishedAt: 'desc' },
+                take: limit,
+            });
+        }
+
+        // Bước 2: nếu chưa đủ → bổ sung bài cùng category
+        if (related.length < limit) {
+            const excludeIds = [articleId, ...related.map(a => a.id)];
+
+            const byCategory = await prisma.article.findMany({
+                where: {
+                    id: { notIn: excludeIds },
+                    status: 'published',
+                    category,
+                },
+                select: articleListSelect,
+                orderBy: { publishedAt: 'desc' },
+                take: limit - related.length,
+            });
+
+            related = [...related, ...byCategory];
+        }
+
+        // Bước 3: nếu vẫn chưa đủ → bổ sung bài mới nhất bất kỳ
+        if (related.length < limit) {
+            const excludeIds = [articleId, ...related.map(a => a.id)];
+
+            const latest = await prisma.article.findMany({
+                where: {
+                    id: { notIn: excludeIds },
+                    status: 'published',
+                },
+                select: articleListSelect,
+                orderBy: { publishedAt: 'desc' },
+                take: limit - related.length,
+            });
+
+            related = [...related, ...latest];
+        }
+
+        return related.map(this._formatTags);
+    }
+
+    async autosave(id, { title, content, excerpt }) {
+        const data = {};
+        if (title !== undefined) data.title = title;
+        if (content !== undefined) data.content = content;
+        if (excerpt !== undefined) data.excerpt = excerpt;
+
+        if (!Object.keys(data).length) return null;
+
+        // Dùng $executeRaw để không trigger @updatedAt
+        const setClauses = [];
+        const values = [];
+        let idx = 1;
+
+        if (data.title) { setClauses.push(`title = $${idx++}`); values.push(data.title); }
+        if (data.content) { setClauses.push(`content = $${idx++}`); values.push(data.content); }
+        if (data.excerpt) { setClauses.push(`excerpt = $${idx++}`); values.push(data.excerpt); }
+
+        values.push(id);
+
+        await prisma.$executeRawUnsafe(
+            `UPDATE articles SET ${setClauses.join(', ')} WHERE id = $${idx} AND status IN ('draft', 'rejected')`,
+            ...values
+        );
+
+        return { savedAt: new Date().toISOString() };
+    }
+
+    async bulkDelete(ids) {
+        const result = await prisma.article.deleteMany({
+            where: { id: { in: ids } },
+        });
+        return result.count;
+    }
+
+    async bulkUpdateStatus(ids, status) {
+        const data = { status };
+        if (status === 'published') data.publishedAt = new Date();
+
+        const result = await prisma.article.updateMany({
+            where: { id: { in: ids } },
+            data,
+        });
+        return result.count;
+    }
+
+    _formatTags(article) {
+        return {
+            ...article,
+            tags: article.tags?.map(at => at.tag) ?? [],
+        };
+    }
 }
 
 module.exports = ArticleRepository;

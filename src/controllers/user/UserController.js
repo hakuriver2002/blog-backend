@@ -99,6 +99,15 @@ class UserController {
             return response.success(res, user, 'Đã mở khóa tài khoản');
         } catch (err) { next(err); }
     }
+
+    bulk = async (req, res, next) => {
+        try {
+            const { ids, action } = req.body || {};
+            if (!action) return response.error(res, 'Vui lòng cung cấp action', 400);
+            const result = await this.userService.bulkAction(ids, action, req.user.id);
+            return response.success(res, result, `Đã ${action} ${result.affected} tài khoản`);
+        } catch (err) { next(err); }
+    }
 }
 
 module.exports = UserController;

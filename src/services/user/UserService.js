@@ -152,6 +152,32 @@ class UserService {
         const passwordHash = await bcrypt.hash(newPassword, 10);
         await this.userRepo.update(userId, { passwordHash });
     }
+
+    async bulkAction(ids, action, adminId) {
+        if (!Array.isArray(ids) || ids.length === 0) {
+            throw new AppError('Vui lòng chọn ít nhất 1 thành viên', 400);
+        }
+        if (ids.length > 100) throw new AppError('Tối đa 100 thành viên mỗi lần', 400);
+
+        if (ids.includes(adminId)) {
+            throw new AppError('Không thể thực hiện hành động này lên tài khoản của mình', 400);
+        }
+
+        switch (action) {
+            case 'approve':
+                return { affected: await this.userRepo.bulkUpdateStatus(ids, 'active', adminId), action };
+            case 'reject':
+                return { affected: await this.userRepo.bulkUpdateStatus(ids, 'rejected'), action };
+            case 'lock':
+                return { affected: await this.userRepo.bulkUpdateStatus(ids, 'inactive'), action };
+            case 'unlock':
+                return { affected: await this.userRepo.bulkUpdateStatus(ids, 'active'), action };
+            case 'delete':
+                return { affected: await this.userRepo.bulkDelete(ids), action };
+            default:
+                throw new AppError('Action không hợp lệ. Chọn: approve, reject, lock, unlock, delete', 400);
+        }
+    }
 }
 
 module.exports = UserService;

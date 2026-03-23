@@ -80,6 +80,34 @@ class ArticleController {
             return response.success(res, articles);
         } catch (err) { next(err); }
     }
+
+    getRelated = async (req, res, next) => {
+        try {
+            const { limit } = req.query;
+            const articles = await this.articleService.getRelated(req.params.id, { limit });
+            return response.success(res, articles);
+        } catch (err) { next(err); }
+    }
+
+    autosave = async (req, res, next) => {
+        try {
+            const { title, content, excerpt } = req.body || {};
+            const result = await this.articleService.autosave(
+                req.params.id, req.user.id, { title, content, excerpt }
+            );
+            return response.success(res, result, 'Đã lưu nháp tự động');
+        } catch (err) { next(err); }
+    }
+
+    bulk = async (req, res, next) => {
+        try {
+            const { ids, action } = req.body || {};
+            if (!action) return response.error(res, 'Vui lòng cung cấp action', 400);
+
+            const result = await this.articleService.bulkAction(ids, action, req.user.role);
+            return response.success(res, result, `Đã ${action} ${result.affected} bài viết`);
+        } catch (err) { next(err); }
+    }
 }
 
 module.exports = ArticleController;
