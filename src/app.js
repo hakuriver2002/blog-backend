@@ -27,6 +27,7 @@ const commentRoutes = require('./routes/comment.routes');
 const userRoutes = require('./routes/user.routes');
 const profileRoutes = require('./routes/profile.routes');
 const searchRoutes = require('./routes/search.routes');
+const notificationsRoutes = require('./routes/notification.routes');
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Swagger Docs 
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
