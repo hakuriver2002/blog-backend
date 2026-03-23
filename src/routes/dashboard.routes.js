@@ -14,5 +14,6 @@ router.use(authenticate, authorize('admin', 'editor'));
 
 router.get('/', controller.getOverview);
 router.get('/stats', controller.getStats);
+router.get('/analytics', controller.getAnalytics);
 
 module.exports = router;

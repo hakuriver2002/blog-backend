@@ -18,6 +18,13 @@ class DashboardController {
             return response.success(res, data);
         } catch (err) { next(err); }
     }
+    getAnalytics = async (req, res, next) => {
+        try {
+            const { period = 'day', days } = req.query;
+            const data = await this.dashboardService.getAnalytics({ period, days });
+            return response.success(res, data);
+        } catch (err) { next(err); }
+    }
 }
 
 module.exports = DashboardController;
