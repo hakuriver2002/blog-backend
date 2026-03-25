@@ -99,6 +99,8 @@ app.get('/test/editor',
     (req, res) => res.json({ success: true, message: `Xin chào Editor: ${req.user.fullName}` })
 );
 
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 app.use((req, res) => {
     res.status(404).json({ success: false, message: 'Không tìm thấy endpoint này' });
 });

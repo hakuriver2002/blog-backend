@@ -17,7 +17,7 @@ class ReviewController {
 
     approve = async (req, res, next) => {
         try {
-            const { note } = req.body || {};
+            const note = req.body?.note || req.body?.reason || null;
             const article = await this.reviewService.approveArticle(
                 req.params.id,
                 req.user.id,
@@ -29,7 +29,7 @@ class ReviewController {
 
     reject = async (req, res, next) => {
         try {
-            const { note } = req.body || {};
+            const note = req.body?.reason || req.body?.note;
             const article = await this.reviewService.rejectArticle(
                 req.params.id,
                 req.user.id,
