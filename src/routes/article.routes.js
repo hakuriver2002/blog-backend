@@ -1,10 +1,16 @@
 const express = require('express');
 const ArticleRepository = require('../repositories/postgres/ArticleRepository');
 const ReviewRepository = require('../repositories/postgres/ReviewRepository');
+const likeBookmarkRepository = require('../repositories/postgres/LikeBookmarkRepository');
+
 const ArticleService = require('../services/article/ArticleService');
 const ReviewService = require('../services/article/ReviewService');
+const LikeBookmarkService = require('../services/article/LikeBookmarkService');
+
 const ArticleController = require('../controllers/article/ArticleController');
 const ReviewController = require('../controllers/article/ReviewController');
+const LikeBookmarkController = require('../controllers/article/LikeBookmarkController');
+
 const { authenticate, optionalAuth } = require('../middlewares/auth.middleware');
 const { authorize } = require('../middlewares/role.middleware');
 const { uploadThumbnail } = require('../middlewares/upload.middleware');
@@ -15,9 +21,11 @@ const { validateArticle, validateUUID } = require('../middlewares/validate.middl
 const router = express.Router();
 const articleRepo = new ArticleRepository();
 const reviewRepo = new ReviewRepository();
+const likebookmarkRepo = new likeBookmarkRepository();
 
 const articleCtrl = new ArticleController(new ArticleService(articleRepo));
 const reviewCtrl = new ReviewController(new ReviewService(articleRepo, reviewRepo));
+const likebookmarkCtrl = new LikeBookmarkController(new LikeBookmarkService(likebookmarkRepo, articleRepo));
 
 /**
  * @swagger
@@ -339,6 +347,18 @@ router.patch('/:id/reject',
     authenticate,
     authorize('admin', 'editor'),
     reviewCtrl.reject
+);
+
+// POST /api/articles/:id/like
+router.post('/:id/like',
+    authenticate,
+    likebookmarkCtrl.toggleLike
+);
+
+// POST /api/articles/:id/bookmark
+router.post('/:id/bookmark',
+    authenticate,
+    likebookmarkCtrl.toggleBookmark
 );
 
 module.exports = router;
