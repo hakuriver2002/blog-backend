@@ -29,6 +29,8 @@ const profileRoutes = require('./routes/profile.routes');
 const searchRoutes = require('./routes/search.routes');
 const notificationsRoutes = require('./routes/notification.routes');
 const uploadRoutes = require('./routes/upload.routes');
+const athletesRoutes = require('./routes/athlete.routes');
+const achievementsRoutes = require('./routes/achievement.routes');
 
 const app = express();
 
@@ -63,6 +65,8 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/athletes', athletesRoutes);
+app.use('/api/achievements', achievementsRoutes);
 
 // Swagger Docs 
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {

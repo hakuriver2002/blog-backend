@@ -85,6 +85,7 @@ model User {
   resetTokens     PasswordResetToken[]
   notifications         Notification[]  @relation("UserNotifications")
   triggeredNotifications Notification[] @relation("NotificationActor")
+  athleteProfile AthleteProfile? @relation("AthleteProfile")
 
   @@map("users")
 }
@@ -233,4 +234,135 @@ model Notification {
   @@index([userId, isRead])
   @@index([userId, createdAt])
   @@map("notifications")
+}
+ 
+enum BeltColor {
+  white       // Trắng
+  yellow      // Vàng
+  orange      // Cam
+  green       // Xanh lá
+  blue        // Xanh dương
+  purple      // Tím
+  red         // Đỏ
+  brown       // Nâu
+  black_1dan  // Đen 1 đẳng
+  black_2dan  // Đen 2 đẳng
+  black_3dan  // Đen 3 đẳng
+  black_4dan  // Đen 4 đẳng
+  black_5dan  // Đen 5 đẳng
+}
+ 
+enum AchievementLevel {
+  club        // Cấp CLB
+  district    // Cấp Quận/Huyện
+  provincial  // Cấp Tỉnh/Thành
+  national    // Cấp Quốc gia
+  regional    // Cấp Khu vực (Đông Nam Á, châu Á...)
+  world       // Cấp Thế giới
+}
+ 
+enum AchievementMedal {
+  gold    // Huy chương Vàng
+  silver  // Huy chương Bạc
+  bronze  // Huy chương Đồng
+  top4    // Hạng 4
+  other   // Khác (giải khuyến khích, chứng nhận...)
+}
+ 
+enum AthleteDiscipline {
+  kata          // Quyền
+  kumite        // Đối kháng
+  kata_team     // Quyền đồng đội
+  kumite_team   // Đối kháng đồng đội
+  both          // Cả hai
+}
+ 
+ 
+model AthleteProfile {
+  id              String            @id @default(uuid())
+  userId          String            @unique @map("user_id")
+  user            User              @relation("AthleteProfile", fields: [userId], references: [id], onDelete: Cascade)
+ 
+  // Thông tin cơ bản
+  dateOfBirth     DateTime?         @map("date_of_birth")
+  gender          String?           @db.VarChar(10)        // male / female / other
+  height          Int?              // cm
+  weight          Float?            // kg
+  nationality     String?           @default("Việt Nam") @db.VarChar(100)
+  hometown        String?           @map("home_town") @db.VarChar(200)
+  club            String?           @db.VarChar(200)       // Tên CLB / võ đường
+ 
+  // Thông tin tập luyện
+  discipline      AthleteDiscipline @default(both)
+  startYear       Int?              @map("start_year")     // Năm bắt đầu tập
+  currentBelt     BeltColor         @default(white) @map("current_belt")
+  coachName       String?           @map("coach_name") @db.VarChar(100)
+ 
+  // Bio & Social
+  bio             String?           @db.Text
+  isPublic        Boolean           @default(true) @map("is_public")  // Hiển thị công khai
+ 
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+ 
+  // Relations
+  achievements    Achievement[]
+  beltHistory     Belt[]
+ 
+  @@map("athlete_profiles")
+}
+ 
+model Achievement {
+  id              String            @id @default(uuid())
+  athleteId       String            @map("athlete_id")
+  athlete         AthleteProfile    @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+ 
+  // Thông tin giải đấu
+  tournamentName  String            @map("tournament_name") @db.VarChar(300)
+  discipline      AthleteDiscipline
+  level           AchievementLevel
+  medal           AchievementMedal
+  year            Int
+  location        String?           @db.VarChar(200)       // Địa điểm tổ chức
+  weightCategory  String?           @map("weight_category") @db.VarChar(50) // Hạng cân (kumite)
+  kataName        String?           @map("kata_name") @db.VarChar(100)      // Tên bài quyền (kata)
+  description     String?           @db.Text
+ 
+  // Minh chứng
+  images          AchievementImage[]
+ 
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+ 
+  @@index([athleteId])
+  @@index([year])
+  @@index([level])
+  @@map("achievements")
+}
+ 
+model AchievementImage {
+  id            String      @id @default(uuid())
+  achievementId String      @map("achievement_id")
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  imageUrl      String      @map("image_url") @db.VarChar(500)
+  caption       String?     @db.VarChar(300)
+  sortOrder     Int         @default(0) @map("sort_order")
+  createdAt     DateTime    @default(now()) @map("created_at")
+ 
+  @@map("achievement_images")
+}
+ 
+model Belt {
+  id          String         @id @default(uuid())
+  athleteId   String         @map("athlete_id")
+  athlete     AthleteProfile @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  belt        BeltColor
+  achievedAt  DateTime       @map("achieved_at")           // Ngày thăng đai
+  examiner    String?        @db.VarChar(100)              // Người kiểm tra
+  location    String?        @db.VarChar(200)
+  note        String?        @db.Text
+  createdAt   DateTime       @default(now()) @map("created_at")
+ 
+  @@index([athleteId])
+  @@map("belts")
 }
