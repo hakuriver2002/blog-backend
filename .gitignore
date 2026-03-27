@@ -1,5 +1,7 @@
 node_modules
 # Keep environment variables out of version control
 .env
+.agents/skills/code-review-expert
+skills-lock.json
 
 /generated/prisma

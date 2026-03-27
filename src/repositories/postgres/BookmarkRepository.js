@@ -1,39 +1,6 @@
 const prisma = require('../../config/prisma');
 
-class LikeBookmarkRepository {
-
-    // ── Like ──────────────────────────────────────────────────────
-
-    async findLike(articleId, userId) {
-        return prisma.articleLike.findUnique({
-            where: { articleId_userId: { articleId, userId } },
-        });
-    }
-
-    async addLike(articleId, userId) {
-        return prisma.articleLike.create({
-            data: { articleId, userId },
-        });
-    }
-
-    async removeLike(articleId, userId) {
-        return prisma.articleLike.delete({
-            where: { articleId_userId: { articleId, userId } },
-        });
-    }
-
-    async getLikeCount(articleId) {
-        return prisma.articleLike.count({ where: { articleId } });
-    }
-
-    // ── Bookmark ──────────────────────────────────────────────────
-
-    async findBookmark(articleId, userId) {
-        return prisma.articleBookmark.findUnique({
-            where: { articleId_userId: { articleId, userId } },
-        });
-    }
-
+class BookmarkRepository {
     async addBookmark(articleId, userId) {
         return prisma.articleBookmark.create({
             data: { articleId, userId },
@@ -90,4 +57,4 @@ class LikeBookmarkRepository {
     }
 }
 
-module.exports = LikeBookmarkRepository;
+module.exports = BookmarkRepository;

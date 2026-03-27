@@ -1,19 +1,10 @@
 const response = require('../../utils/response');
 
-class LikeBookmarkController {
-    constructor(likeBookmarkService) {
-        this.service = likeBookmarkService;
+class BookmarkController {
+    constructor(bookmarkService) {
+        this.service = bookmarkService;
     }
 
-    // POST /api/articles/:id/like
-    toggleLike = async (req, res, next) => {
-        try {
-            const result = await this.service.toggleLike(req.params.id, req.user.id);
-            return response.success(res, result, result.liked ? 'Đã thích bài viết' : 'Đã bỏ thích');
-        } catch (err) { next(err); }
-    };
-
-    // POST /api/articles/:id/bookmark
     toggleBookmark = async (req, res, next) => {
         try {
             const result = await this.service.toggleBookmark(req.params.id, req.user.id);
@@ -21,7 +12,6 @@ class LikeBookmarkController {
         } catch (err) { next(err); }
     };
 
-    // GET /api/profile/bookmarks
     getBookmarks = async (req, res, next) => {
         try {
             const { page, limit } = req.query;
@@ -31,4 +21,4 @@ class LikeBookmarkController {
     };
 }
 
-module.exports = LikeBookmarkController;
+module.exports = BookmarkController;
