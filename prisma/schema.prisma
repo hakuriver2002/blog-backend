@@ -88,6 +88,8 @@ model User {
   athleteProfile AthleteProfile? @relation("AthleteProfile")
   likes     ArticleLike[]     @relation("ArticleLikes")
   bookmarks ArticleBookmark[] @relation("ArticleBookmarks")
+  createdEvents       Event[]             @relation("EventCreator")
+  eventRegistrations  EventRegistration[] @relation("EventRegistrations")
 
   @@map("users")
 }
@@ -396,4 +398,109 @@ model ArticleBookmark {
   @@unique([articleId, userId])  // mỗi user chỉ bookmark 1 lần
   @@index([userId])
   @@map("article_bookmarks")
+}
+
+enum EventStatus {
+  draft       // Nháp
+  published   // Đã công bố
+  cancelled   // Đã hủy
+  completed   // Đã kết thúc
+}
+ 
+enum EventCategory {
+  tournament    // Giải đấu
+  training      // Tập huấn
+  seminar       // Hội thảo / Seminar
+  grading       // Thi lên đai
+  friendly      // Giao hữu
+  other         // Khác
+}
+ 
+enum EventLevel {
+  club          // Cấp CLB
+  district      // Cấp Quận/Huyện
+  provincial    // Cấp Tỉnh/Thành
+  national      // Cấp Quốc gia
+  international // Quốc tế
+}
+ 
+model Event {
+  id              String        @id @default(uuid())
+ 
+  // Thông tin cơ bản
+  title           String        @db.VarChar(300)
+  slug            String        @unique @db.VarChar(350)
+  description     String?       @db.Text
+  thumbnailUrl    String?       @map("thumbnail_url") @db.VarChar(500)
+ 
+  // Phân loại
+  category        EventCategory
+  level           EventLevel    @default(club)
+  status          EventStatus   @default(draft)
+ 
+  // Thời gian
+  startDate       DateTime      @map("start_date")
+  endDate         DateTime      @map("end_date")
+  registrationDeadline DateTime? @map("registration_deadline")
+ 
+  // Địa điểm
+  location        String        @db.VarChar(300)       // Tên địa điểm
+  address         String?       @db.VarChar(500)       // Địa chỉ đầy đủ
+  city            String?       @db.VarChar(100)
+ 
+  // Hạng mục thi đấu (lưu dạng JSON array)
+  divisions       String?       @db.Text               // JSON: ["Kata Nam", "Kumite -60kg", ...]
+ 
+  // Đăng ký
+  registrationUrl String?       @map("registration_url") @db.VarChar(500)
+  maxParticipants Int?          @map("max_participants")
+  fee             Float?                               // Phí tham dự (VND)
+  feeDescription  String?       @map("fee_description") @db.VarChar(300)
+ 
+  // Thông tin tổ chức
+  organizer       String?       @db.VarChar(200)       // Đơn vị tổ chức
+  contactEmail    String?       @map("contact_email") @db.VarChar(150)
+  contactPhone    String?       @map("contact_phone") @db.VarChar(20)
+ 
+  // Nội bộ
+  isPublic        Boolean       @default(true) @map("is_public")
+  isFeatured      Boolean       @default(false) @map("is_featured")
+  viewCount       Int           @default(0) @map("view_count")
+ 
+  // Creator
+  createdById     String        @map("created_by")
+  createdBy       User          @relation("EventCreator", fields: [createdById], references: [id])
+ 
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+ 
+  // Relations
+  registrations   EventRegistration[]
+ 
+  @@index([status])
+  @@index([category])
+  @@index([startDate])
+  @@index([createdById])
+  @@map("events")
+}
+ 
+model EventRegistration {
+  id          String   @id @default(uuid())
+  eventId     String   @map("event_id")
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId      String   @map("user_id")
+  user        User     @relation("EventRegistrations", fields: [userId], references: [id], onDelete: Cascade)
+ 
+  // Thông tin đăng ký
+  division    String?  @db.VarChar(100)   // Hạng mục đăng ký
+  note        String?  @db.Text           // Ghi chú thêm
+  status      String   @default("pending") @db.VarChar(20) // pending | confirmed | cancelled
+ 
+  registeredAt DateTime @default(now()) @map("registered_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+ 
+  @@unique([eventId, userId])             // Mỗi user chỉ đăng ký 1 lần/event
+  @@index([eventId])
+  @@index([userId])
+  @@map("event_registrations")
 }
