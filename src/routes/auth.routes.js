@@ -67,7 +67,7 @@ const oAuthCtrl = new OAuthController();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/register', authLimiter, validateRegister, controller.register);
+router.post('/register', validateRegister, controller.register);
 
 /**
  * @swagger
