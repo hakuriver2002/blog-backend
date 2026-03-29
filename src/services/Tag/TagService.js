@@ -24,7 +24,7 @@ class TagService {
         this.tagRepo = tagRepository;
     }
 
-    // ── Public ────────────────────────────────────────────────────
+    // ── Public
 
     async getAll({ search, isActive, sortBy = 'popular', page = 1, limit = 20 }) {
         const l = Math.min(+limit || 20, 100);
