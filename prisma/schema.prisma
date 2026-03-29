@@ -90,6 +90,7 @@ model User {
   bookmarks ArticleBookmark[] @relation("ArticleBookmarks")
   createdEvents       Event[]             @relation("EventCreator")
   eventRegistrations  EventRegistration[] @relation("EventRegistrations")
+  createdTags  Tag[] @relation("TagCreator")
 
   @@map("users")
 }
@@ -154,13 +155,27 @@ model ArticleImage {
 }
 
 model Tag {
-  id        String       @id @default(uuid())
-  name      String       @unique @db.VarChar(100)
-  slug      String       @unique @db.VarChar(120)
-  createdAt DateTime     @default(now()) @map("created_at")
-
-  articles  ArticleTag[]
-
+  id          String       @id @default(uuid())
+  name        String       @unique @db.VarChar(100)
+  slug        String       @unique @db.VarChar(120)
+ 
+  description String?      @db.Text
+  color       String?      @db.VarChar(7)    
+  icon        String?      @db.VarChar(50)   
+  isActive    Boolean      @default(true) @map("is_active")
+  usageCount  Int          @default(0) @map("usage_count")  
+ 
+  createdById String?      @map("created_by")
+  createdBy   User?        @relation("TagCreator", fields: [createdById], references: [id], onDelete: SetNull)
+ 
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+ 
+  articles    ArticleTag[]
+ 
+  @@index([slug])
+  @@index([isActive])
+  @@index([usageCount])
   @@map("tags")
 }
 

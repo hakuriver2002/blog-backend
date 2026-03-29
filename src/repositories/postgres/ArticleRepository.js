@@ -1,170 +1,155 @@
 const prisma = require('../../config/prisma');
-const IArticleRepository = require('../interfaces/IArticleRepository');
 
-class ArticleRepository extends IArticleRepository {
+const articleListSelect = {
+    id: true, title: true, slug: true, excerpt: true,
+    thumbnailUrl: true, category: true, status: true,
+    isFeatured: true, viewCount: true, publishedAt: true,
+    createdAt: true, updatedAt: true,
+    author: { select: { id: true, fullName: true, avatarUrl: true, role: true } },
+    tags: { select: { tag: { select: { id: true, name: true, slug: true } } } },
+};
 
-    async findById(id) {
-        return await prisma.article.findUnique({
-            where: { id },
-            include: {
-                author: { select: { id: true, fullName: true, avatarUrl: true } },
-                images: { orderBy: { sortOrder: 'asc' } },
-                tags: { include: { tag: true } },
-            }
-        });
-    }
+class ArticleRepository {
 
-    async findAll({ category, status = 'published', page = 1, limit = 10, search }) {
-        const skip = (page - 1) * limit;
+    async findAll({ status, category, authorId, search, limit, offset }) {
         const where = {
-            status,
+            ...(status && { status }),
             ...(category && { category }),
+            ...(authorId && { authorId }),
             ...(search && {
-                title: { contains: search, mode: 'insensitive' }
+                OR: [
+                    { title: { contains: search, mode: 'insensitive' } },
+                    { excerpt: { contains: search, mode: 'insensitive' } },
+                ],
             }),
         };
 
         const [articles, total] = await Promise.all([
             prisma.article.findMany({
                 where,
-                skip,
+                select: articleListSelect,
+                orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
                 take: limit,
-                orderBy: { publishedAt: 'desc' },
-                include: {
-                    author: { select: { id: true, fullName: true } },
-                }
+                skip: offset,
             }),
             prisma.article.count({ where }),
         ]);
 
-        return { articles, total };
+        return { articles: articles.map(this._formatTags), total };
     }
 
-    async findPending({ page = 1, limit = 20 }) {
-        const skip = (page - 1) * limit;
-        const where = { status: 'pending' };
+    async findById(id) {
+        const article = await prisma.article.findUnique({
+            where: { id },
+            select: { ...articleListSelect, content: true },
+        });
+        return article ? this._formatTags(article) : null;
+    }
 
+    async findBySlug(slug) {
+        const article = await prisma.article.findUnique({
+            where: { slug },
+            select: { ...articleListSelect, content: true },
+        });
+        return article ? this._formatTags(article) : null;
+    }
+
+    async findPending({ limit, offset }) {
+        const where = { status: 'pending' };
         const [articles, total] = await Promise.all([
             prisma.article.findMany({
                 where,
-                skip,
+                select: {
+                    id: true, title: true, slug: true, excerpt: true,
+                    thumbnailUrl: true, category: true, createdAt: true,
+                    author: { select: { fullName: true, email: true } },
+                },
+                orderBy: { createdAt: 'asc' },
                 take: limit,
-                orderBy: { createdAt: 'asc' },  // FIFO
-                include: {
-                    author: { select: { id: true, fullName: true } },
-                }
+                skip: offset,
             }),
             prisma.article.count({ where }),
         ]);
-
         return { articles, total };
     }
 
-    async findByAuthor(authorId) {
-        return await prisma.article.findMany({
-            where: { authorId },
-            orderBy: { createdAt: 'desc' },
-        });
-    }
-
     async create(data) {
-        const { images, ...articleData } = data;
-
-        return await prisma.article.create({
-            data: {
-                ...articleData,
-                ...(images && images.length > 0 && {
-                    images: {
-                        create: images.map((url, idx) => ({
-                            imageUrl: url,
-                            sortOrder: idx,
-                        }))
-                    }
-                })
-            },
-            include: {
-                author: { select: { id: true, fullName: true } },
-                images: true,
-            }
+        const article = await prisma.article.create({
+            data,
+            select: { ...articleListSelect, content: true },
         });
+        return this._formatTags(article);
     }
 
     async update(id, data) {
-        const { images, ...articleData } = data;
-
-        return await prisma.article.update({
+        const article = await prisma.article.update({
             where: { id },
-            data: articleData,
-            include: {
-                author: { select: { id: true, fullName: true } },
-                images: true,
-            }
+            data,
+            select: { ...articleListSelect, content: true },
         });
+        return this._formatTags(article);
     }
 
     async delete(id) {
-        return await prisma.article.delete({ where: { id } });
+        return prisma.article.delete({ where: { id } });
     }
 
     async incrementViewCount(id) {
-        return await prisma.article.update({
+        return prisma.article.update({
             where: { id },
             data: { viewCount: { increment: 1 } },
         });
     }
 
-    async findByAuthorWithFilter(authorId, { status, page = 1, limit = 10 }) {
-        const skip = (page - 1) * limit;
-        const where = {
-            authorId,
-            ...(status && { status }),
-        };
-
-        const [articles, total] = await Promise.all([
-            prisma.article.findMany({
-                where,
-                skip,
-                take: limit,
-                orderBy: { createdAt: 'desc' },
-                select: {
-                    id: true,
-                    title: true,
-                    slug: true,
-                    category: true,
-                    status: true,
-                    thumbnailUrl: true,
-                    viewCount: true,
-                    createdAt: true,
-                    publishedAt: true,
-                }
-            }),
-            prisma.article.count({ where }),
-        ]);
-
-        return { articles, total };
-    }
-
+    // ── Tags ─────────────────────────────────────────────────────
     async syncTags(articleId, tagNames) {
-        await prisma.articleTag.deleteMany({ where: { articleId } });
-        if (!tagNames?.length) return;
-
-        const tags = await Promise.all(
-            tagNames.map(name => {
-                const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                return prisma.tag.upsert({
-                    where: { slug },
-                    update: {},
-                    create: { name, slug },
-                });
-            })
-        );
-
-        await prisma.articleTag.createMany({
-            data: tags.map(tag => ({ articleId, tagId: tag.id })),
-            skipDuplicates: true,
+        // Lấy tags hiện tại trước khi xóa để recalculate sau
+        const oldTags = await prisma.articleTag.findMany({
+            where: { articleId },
+            select: { tagId: true },
         });
+        const oldTagIds = oldTags.map(t => t.tagId);
+
+        // Xóa tất cả tags cũ
+        await prisma.articleTag.deleteMany({ where: { articleId } });
+
+        let newTagIds = [];
+        if (tagNames?.length) {
+            const tags = await Promise.all(
+                tagNames.map(name => {
+                    const slug = name.toLowerCase()
+                        .replace(/\s+/g, '-')
+                        .replace(/[^a-z0-9-]/g, '');
+                    return prisma.tag.upsert({
+                        where: { slug },
+                        update: {},
+                        create: { name, slug },
+                    });
+                })
+            );
+
+            await prisma.articleTag.createMany({
+                data: tags.map(tag => ({ articleId, tagId: tag.id })),
+                skipDuplicates: true,
+            });
+
+            newTagIds = tags.map(t => t.id);
+        }
+
+        // Recalculate usageCount cho các tags bị ảnh hưởng
+        const affectedTagIds = [...new Set([...oldTagIds, ...newTagIds])];
+        if (affectedTagIds.length) {
+            await Promise.all(
+                affectedTagIds.map(tagId =>
+                    prisma.articleTag.count({ where: { tagId } }).then(count =>
+                        prisma.tag.update({ where: { id: tagId }, data: { usageCount: count } })
+                    )
+                )
+            );
+        }
     }
 
+    // ── Reviews ───────────────────────────────────────────────────
     async addReview({ articleId, reviewerId, action, note }) {
         return prisma.articleReview.create({
             data: { articleId, reviewerId, action, note },
@@ -179,6 +164,11 @@ class ArticleRepository extends IArticleRepository {
         });
     }
 
+    // ── Related Articles ──────────────────────────────────────────
+    /**
+     * Tìm bài liên quan: ưu tiên cùng tag, fallback cùng category
+     * Loại trừ bài hiện tại, chỉ lấy published
+     */
     async findRelated(articleId, { category, tagIds = [], limit = 5 }) {
         // Bước 1: tìm bài cùng tag (ưu tiên cao nhất)
         let related = [];
@@ -236,6 +226,11 @@ class ArticleRepository extends IArticleRepository {
         return related.map(this._formatTags);
     }
 
+    // ── Auto-save ─────────────────────────────────────────────────
+    /**
+     * Lưu nháp không thay đổi updatedAt (dùng raw để bypass Prisma @updatedAt)
+     * Chỉ cho phép autosave khi bài ở trạng thái draft hoặc rejected
+     */
     async autosave(id, { title, content, excerpt }) {
         const data = {};
         if (title !== undefined) data.title = title;
@@ -263,6 +258,7 @@ class ArticleRepository extends IArticleRepository {
         return { savedAt: new Date().toISOString() };
     }
 
+    // ── Bulk operations ───────────────────────────────────────────
     async bulkDelete(ids) {
         const result = await prisma.article.deleteMany({
             where: { id: { in: ids } },
@@ -281,6 +277,7 @@ class ArticleRepository extends IArticleRepository {
         return result.count;
     }
 
+    // ── Helper ────────────────────────────────────────────────────
     _formatTags(article) {
         return {
             ...article,
