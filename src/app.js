@@ -4,6 +4,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
 const errorMiddleware = require('./middlewares/error.middleware');
+const cookieParser = require('cookie-parser');
 const passport = require('./config/passport');
 const { isDev } = require('./config/env');
 const swaggerUi = require('swagger-ui-express');
@@ -56,6 +57,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(sanitizeBody);
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(passport.initialize());
+app.use(cookieParser());
 
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/articles', articleRoutes);

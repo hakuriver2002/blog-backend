@@ -1,4 +1,4 @@
-const { verifyToken } = require('../utils/jwt');
+const { verifyAccessToken } = require('../utils/jwt');
 const AppError = require('../domain/errors/AppError');
 const prisma = require('../config/prisma');
 
@@ -10,7 +10,7 @@ const authenticate = async (req, res, next) => {
         }
 
         const token = authHeader.split(' ')[1];
-        const decoded = verifyToken(token);
+        const decoded = verifyAccessToken(token);
         if (!decoded) {
             throw new AppError('Token không hợp lệ hoặc đã hết hạn', 401);
         }

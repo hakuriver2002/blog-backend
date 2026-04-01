@@ -1,6 +1,9 @@
 require('dotenv').config();
 
-const required = ['DATABASE_URL', 'JWT_SECRET'];
+const required = ['DATABASE_URL', 'ACCESS_TOKEN_SECRET',
+    'REFRESH_TOKEN_SECRET',
+    'ACCESS_TOKEN_EXPIRES',
+    'REFRESH_TOKEN_EXPIRES'];
 required.forEach(key => {
     if (!process.env[key]) throw new Error(`Thiếu biến môi trường: ${key}`);
 });
@@ -10,10 +13,10 @@ module.exports = {
     port: parseInt(process.env.PORT) || 3000,
     isDev: process.env.NODE_ENV === 'development',
     isProd: process.env.NODE_ENV === 'production',
-    jwt: {
-        secret: process.env.JWT_SECRET,
-        expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-    },
+    accessTokenSecret: process.env.ACCESS_TOKEN_SECRET,
+    refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET,
+    accessTokenExpiresIn: process.env.ACCESS_TOKEN_EXPIRES,
+    refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES,
     google: {
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,

@@ -121,6 +121,26 @@ class UserRepository extends IUserRepository {
     async markResetTokenUsed(token) {
         return prisma.passwordResetToken.update({ where: { token }, data: { used: true } });
     }
+
+    // ── Refresh Token ─────────────────────────────────────────
+    async createRefreshToken({ token, userId, expiresAt }) {
+        return prisma.refreshToken.create({ data: { token, userId, expiresAt } });
+    }
+
+    async findRefreshToken(token) {
+        return prisma.refreshToken.findUnique({
+            where: { token },
+            include: { user: { select: { id: true, email: true, name: true } } },
+        });
+    }
+
+    async deleteRefreshToken(token) {
+        return prisma.refreshToken.delete({ where: { token } });
+    }
+
+    async deleteAllRefreshTokensByUser(userId) {
+        return prisma.refreshToken.deleteMany({ where: { userId } });
+    }
 }
 
 module.exports = UserRepository;

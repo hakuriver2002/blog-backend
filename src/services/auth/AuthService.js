@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const AppError = require('../../domain/errors/AppError');
 const { generateToken } = require('../../utils/jwt');
 const { sendResetPasswordEmail } = require('../../utils/mailer');
+const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../../utils/jwt');
 const NotificationRepository = require('../../repositories/postgres/NotificationRepository');
 const NotificationService = require('../NotificationService');
 const UserService = require('../user/UserService');
@@ -47,10 +48,18 @@ class AuthService {
         if (user.status === 'inactive') throw new AppError('Tài khoản đã bị khóa. Liên hệ Admin.', 403);
         if (user.status === 'rejected') throw new AppError('Tài khoản đã bị từ chối', 403);
 
-        const token = generateToken({ id: user.id, email: user.email, role: user.role });
+        const accessToken = generateAccessToken({ id: user.id, email: user.email, role: user.role });
+        const refreshToken = generateRefreshToken({ id: user.id, email: user.email, role: user.role });
+
+        await this.userRepo.createRefreshToken({
+            token: refreshToken,
+            userId: user.id,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        });
 
         return {
-            token,
+            accessToken,
+            refreshToken,
             user: {
                 id: user.id, fullName: user.fullName, email: user.email,
                 role: user.role, status: user.status, avatarUrl: user.avatarUrl,
@@ -58,8 +67,25 @@ class AuthService {
         };
     }
 
-    async logout() {
+    async refreshAccessToken(refreshToken) {
+        const token = await this.userRepo.findRefreshToken(refreshToken);
+        if (!token) throw new AppError('Refresh token không hợp lệ', 401);
+
+        const payload = verifyRefreshToken(refreshToken);
+        if (payload.id !== token.userId) throw new AppError('Refresh token không hợp lệ', 401);
+
+        const accessToken = generateAccessToken({ id: payload.id, email: payload.email, role: payload.role });
+        return { accessToken };
+    }
+
+    async logout(refreshToken) {
+        await this.userRepo.deleteRefreshToken(refreshToken);
         return { message: 'Đăng xuất thành công' };
+    }
+
+    async logoutAll(userId) {
+        await this.userRepo.deleteAllRefreshTokensByUser(userId);
+        return { message: 'Đăng xuất tất cả thành công' };
     }
 
     async getMe(userId) {

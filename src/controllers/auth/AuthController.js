@@ -1,4 +1,5 @@
 const response = require('../../utils/response');
+const { setRefreshCookie, clearRefreshCookie, REFRESH_COOKIE_NAME } = require('../../utils/cookie');
 
 class AuthController {
     constructor(authService, passwordService) {
@@ -34,7 +35,22 @@ class AuthController {
             }
 
             const result = await this.authService.login({ email, password });
+            setRefreshCookie(res, result.refreshToken);
             return response.success(res, result, 'Đăng nhập thành công');
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    refresh = async (req, res, next) => {
+        try {
+            const oldToken = req.cookies[REFRESH_COOKIE_NAME];
+            if (!oldToken) throw new AppError('Refresh token không tìm thấy', 401);
+
+            const { accessToken, refreshToken } = await this.authService.refresh(oldToken);
+
+            setRefreshCookie(res, refreshToken);
+            return response.success(res, { accessToken }, 'Refresh token thành công');
         } catch (err) {
             next(err);
         }
@@ -47,18 +63,27 @@ class AuthController {
             next(err);
         }
     }
-    // logout = async (req, res, next) => {
-    //     try {
-    //         const userId = req.user.id;
-    //         const refreshToken = req.body.refreshToken || null;
-    //         const logoutAll = req.body.logoutAll || false;
 
-    //         const result = await this.authService.logout({ userId, refreshToken, logoutAll });
-    //         return response.success(res, null, result.message);
-    //     } catch (err) {
-    //         next(err);
-    //     }
-    // }
+    logout = async (req, res, next) => {
+        try {
+            const result = await this.authService.logout(req.cookies[REFRESH_COOKIE_NAME]);
+            clearRefreshCookie(res);
+            return response.success(res, null, result.message);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    logoutAll = async (req, res, next) => {
+        try {
+            const userId = req.user.id;
+            const result = await this.authService.logoutAll(userId);
+            clearRefreshCookie(res);
+            return response.success(res, null, result.message);
+        } catch (err) {
+            next(err);
+        }
+    }
 
     forgotPassword = async (req, res, next) => {
         try {

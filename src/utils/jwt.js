@@ -1,18 +1,16 @@
 const jwt = require('jsonwebtoken');
-const { jwt: jwtConfig } = require('../config/env');
+const env = require('../config/env');
 
-const generateToken = (payload) => {
-    return jwt.sign(payload, jwtConfig.secret, {
-        expiresIn: jwtConfig.expiresIn,
-    });
-};
+const generateAccessToken = (payload) =>
+    jwt.sign(payload, env.accessTokenSecret, { expiresIn: env.accessTokenExpiresIn });
 
-const verifyToken = (token) => {
-    try {
-        return jwt.verify(token, jwtConfig.secret);
-    } catch (err) {
-        return null;
-    }
-};
+const generateRefreshToken = (payload) =>
+    jwt.sign(payload, env.refreshTokenSecret, { expiresIn: env.refreshTokenExpiresIn });
 
-module.exports = { generateToken, verifyToken };
+const verifyAccessToken = (token) =>
+    jwt.verify(token, env.accessTokenSecret);
+
+const verifyRefreshToken = (token) =>
+    jwt.verify(token, env.refreshTokenSecret);
+
+module.exports = { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken };

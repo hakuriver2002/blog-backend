@@ -129,7 +129,70 @@ router.post('/login', authLimiter, validateLogin, controller.login);
  */
 router.get('/me', authenticate, controller.getMe);
 
-// router.post('/logout', authenticate, controller.logout);
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Làm mới token
+ *     tags: [Auth]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [refreshToken]
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     responses:
+ *       200:
+ *         description: Token đã được làm mới
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     accessToken: { type: string }
+ *       401:
+ *         description: Refresh token không hợp lệ hoặc đã hết hạn
+ */
+router.post('/refresh', authLimiter, controller.refresh);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Đăng xuất
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *               logoutAll:
+ *                 type: boolean
+ *                 example: false
+ *     responses:
+ *       200:
+ *         description: Đăng xuất thành công
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.post('/logout', controller.logout);
 
 /**
  * @swagger
@@ -190,5 +253,21 @@ router.get('/google/callback',
     passport.authenticate('google', { failureRedirect: '/auth/error', session: false }),
     oAuthCtrl.googleCallback
 );
+
+/**
+ * @swagger
+ * /api/auth/logout-all:
+ *   post:
+ *     summary: Đăng xuất tất cả các phiên
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Đăng xuất tất cả thành công
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.post('/logout-all', authenticate, controller.logoutAll);
 
 module.exports = router;

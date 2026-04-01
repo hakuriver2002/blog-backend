@@ -67,6 +67,7 @@ model User {
   role          UserRole    @default(member)
   status        UserStatus  @default(pending)
   googleId      String?     @unique @map("google_id") @db.VarChar(150)
+  refreshTokens RefreshToken[]
 
   // Relations
   approvedById  String?     @map("approved_by")
@@ -518,4 +519,15 @@ model EventRegistration {
   @@index([eventId])
   @@index([userId])
   @@map("event_registrations")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
