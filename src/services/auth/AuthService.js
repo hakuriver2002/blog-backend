@@ -47,11 +47,10 @@ class AuthService {
         if (user.status === 'inactive') throw new AppError('Tài khoản đã bị khóa. Liên hệ Admin.', 403);
         if (user.status === 'rejected') throw new AppError('Tài khoản đã bị từ chối', 403);
 
-        const { accessToken, refreshToken } = generateTokens({ id: user.id, email: user.email, role: user.role });
+        const token = generateToken({ id: user.id, email: user.email, role: user.role });
 
         return {
-            accessToken,
-            refreshToken,
+            token,
             user: {
                 id: user.id, fullName: user.fullName, email: user.email,
                 role: user.role, status: user.status, avatarUrl: user.avatarUrl,
