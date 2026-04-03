@@ -141,6 +141,10 @@ class UserRepository extends IUserRepository {
     async deleteAllRefreshTokensByUser(userId) {
         return prisma.refreshToken.deleteMany({ where: { userId } });
     }
+
+    async delete(id) {
+        return prisma.user.delete({ where: { id } });
+    }
 }
 
 module.exports = UserRepository;

@@ -32,8 +32,8 @@ router.use(authenticate);
 router.get('/', profileCtrl.getMe);
 router.put('/', uploadThumbnail, profileCtrl.updateMe);
 router.patch('/change-password', profileCtrl.changePassword);
+router.delete('/', profileCtrl.deleteAccount);
 router.get('/articles', profileCtrl.getMyArticles);
-
 router.get('/bookmarks', bookmarkCtrl.getBookmarks);
 
 router.get('/events', eventCtrl.getMyRegistrations);

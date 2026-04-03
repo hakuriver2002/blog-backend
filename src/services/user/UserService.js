@@ -96,6 +96,23 @@ class UserService {
         return this.userRepo.update(userId, data);
     }
 
+    async deleteAccount(userId, password) {
+        const bcrypt = require('bcrypt');
+        const user = await this.userRepo.findByEmail(
+            (await this.userRepo.findById(userId))?.email
+        );
+        if (!user) throw new AppError('Tài khoản không tồn tại', 404);
+        if (user.passwordHash) {
+            const isMatch = await bcrypt.compare(password, user.passwordHash);
+            if (!isMatch) throw new AppError('Mật khẩu không đúng', 401);
+        }
+        if (user.role === 'admin') {
+            const adminCount = await this.userRepo.count({ where: { role: 'admin', status: 'active' } });
+            if (adminCount <= 1) throw new AppError('Không thể xóa tài khoản Admin duy nhất của hệ thống', 400);
+        }
+        await this.userRepo.delete(userId);
+    }
+
     async changePassword(userId, currentPassword, newPassword) {
         const bcrypt = require('bcrypt');
         const base = await this.userRepo.findById(userId);

@@ -77,6 +77,8 @@ router.get('/:id',
     controller.getById
 );
 
+
+
 /**
  * @swagger
  * /api/users/{id}/approve:

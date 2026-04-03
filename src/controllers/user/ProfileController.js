@@ -53,6 +53,18 @@ class ProfileController {
             return response.success(res, articles);
         } catch (err) { next(err); }
     }
+
+    deleteAccount = async (req, res, next) => {
+        try {
+            const { password, confirmation } = req.body || {};
+            if (!password) return response.error(res, 'Vui lòng cung cấp password để xác nhận', 400);
+            if (confirmation !== 'DELETE_MY_ACCOUNT') {
+                return response.error(res, 'Vui lòng gửi confirmation: "DELETE_MY_ACCOUNT"', 400);
+            }
+            await this.userService.deleteAccount(req.user.id, password);
+            return response.success(res, null, 'Tài khoản đã được xóa vĩnh viễn');
+        } catch (err) { next(err); }
+    }
 }
 
 module.exports = ProfileController;
