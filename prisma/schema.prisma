@@ -21,7 +21,7 @@ enum UserRole {
 enum UserStatus {
   pending
   active
-  inactive
+  banned
   rejected
 }
 

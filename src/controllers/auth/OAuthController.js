@@ -1,6 +1,9 @@
 const { generateToken } = require('../../utils/jwt');
 const AppError = require('../../domain/errors/AppError');
 const { appUrl } = require('../../config/env');
+const AuthService = require('../../services/auth/AuthService');
+
+const authService = new AuthService();
 
 class OAuthController {
     googleLogin = (req, res, next) => {
@@ -10,33 +13,33 @@ class OAuthController {
     googleCallback = async (req, res, next) => {
         try {
             const user = req.user;
-            if (!user) throw new AppError('Đăng nhập Google thất bại', 401);
+            if (!user) throw new Error('OAuth failed');
 
-            if (user.status === 'pending') {
-                return res.redirect(
-                    `${appUrl}/auth/pending?message=Tài khoản đang chờ Admin phê duyệt`
-                );
-            }
-            if (user.status === 'inactive') {
-                return res.redirect(
-                    `${appUrl}/auth/error?message=Tài khoản đã bị khóa`
-                );
-            }
-            if (user.status === 'rejected') {
-                return res.redirect(
-                    `${appUrl}/auth/error?message=Tài khoản đã bị từ chối`
-                );
-            }
+            const { accessToken, refreshToken } = await authService.handleOAuthLogin(user);
 
-            const token = generateToken({
-                id: user.id,
-                email: user.email,
-                role: user.role,
+            res.cookie('accessToken', accessToken, {
+                httpOnly: true,
+                secure: false,
+                sameSite: 'Lax',
+                maxAge: 15 * 60 * 1000
             });
 
-            return res.redirect(`${appUrl}/auth/callback?token=${token}`);
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: false,
+                sameSite: 'Lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+
+            let redirectPath = '/';
+            if (user.role === 'admin' || user.role === 'editor') {
+                redirectPath = '/dashboard';
+            }
+
+            return res.redirect(`${appUrl}${redirectPath}`);
+
         } catch (err) {
-            next(err);
+            return res.redirect(`${appUrl}/auth/callback/google?error=${err.message}`);
         }
     }
 }

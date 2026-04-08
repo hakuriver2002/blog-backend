@@ -35,8 +35,14 @@ class AuthController {
             }
 
             const result = await this.authService.login({ email, password });
+
+            let redirectTo = '/';
+
+            if (result.user.role === 'admin') {
+                redirectTo = '/admin';
+            }
             setRefreshCookie(res, result.refreshToken);
-            return response.success(res, result, 'Đăng nhập thành công');
+            return response.success(res, { ...result, redirectTo }, 'Đăng nhập thành công');
         } catch (err) {
             next(err);
         }

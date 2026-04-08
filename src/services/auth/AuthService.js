@@ -1,7 +1,6 @@
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const AppError = require('../../domain/errors/AppError');
-const { generateToken } = require('../../utils/jwt');
 const { sendResetPasswordEmail } = require('../../utils/mailer');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../../utils/jwt');
 const NotificationRepository = require('../../repositories/postgres/NotificationRepository');
@@ -45,7 +44,7 @@ class AuthService {
         if (!valid) throw new AppError('Email hoặc mật khẩu không đúng', 401);
 
         if (user.status === 'pending') throw new AppError('Tài khoản chưa được phê duyệt', 403);
-        if (user.status === 'inactive') throw new AppError('Tài khoản đã bị khóa. Liên hệ Admin.', 403);
+        if (user.status === 'banned') throw new AppError('Tài khoản đã bị khóa. Liên hệ Admin.', 403);
         if (user.status === 'rejected') throw new AppError('Tài khoản đã bị từ chối', 403);
 
         const accessToken = generateAccessToken({ id: user.id, email: user.email, role: user.role });
@@ -65,6 +64,27 @@ class AuthService {
                 role: user.role, status: user.status, avatarUrl: user.avatarUrl,
             },
         };
+    }
+
+    async handleOAuthLogin(user) {
+
+        if (user.status === 'pending') throw new AppError('Tài khoản chưa được phê duyệt', 403);
+        if (user.status === 'banned') throw new AppError('Tài khoản đã bị khóa. Liên hệ Admin.', 403);
+        if (user.status === 'rejected') throw new AppError('Tài khoản đã bị từ chối', 403);
+
+        const payload = {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+        };
+
+        const accessToken = generateAccessToken(payload);
+        const refreshToken = generateRefreshToken(payload);
+
+        // TODO: save refreshToken to DB (important)
+        // await tokenRepository.save(refreshToken)
+
+        return { accessToken, refreshToken };
     }
 
     async refreshAccessToken(refreshToken) {
