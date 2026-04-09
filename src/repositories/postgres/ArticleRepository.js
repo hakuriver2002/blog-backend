@@ -1,4 +1,5 @@
 const prisma = require('../../config/prisma');
+const IArticleRepository = require('../interfaces/IArticleRepository');
 
 const articleListSelect = {
     id: true, title: true, slug: true, excerpt: true,
@@ -9,7 +10,7 @@ const articleListSelect = {
     tags: { select: { tag: { select: { id: true, name: true, slug: true } } } },
 };
 
-class ArticleRepository {
+class ArticleRepository extends IArticleRepository {
 
     async findAll({ status, category, authorId, search, limit, offset }) {
         const where = {

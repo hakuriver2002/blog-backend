@@ -20,7 +20,7 @@ class ArticleController {
                     page: +page,
                     limit: +limit,
                     total: result.total,
-                    pages: Math.ceil(result.total / limit),
+                    totalPages: Math.ceil(result.total / limit),
                 }
             });
         } catch (err) { next(err); }
